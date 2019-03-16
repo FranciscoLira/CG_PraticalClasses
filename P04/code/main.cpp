@@ -9,14 +9,33 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <stdlib.h>
+#include <string>
+using namespace std;
+
+/*
+	INTEL
+SIDES                    |      4096 |     16384 |     65536 |    262144 |
+Immediate mode           |   120/190 |        60 |     11/13 |       4/5 |
+VBOs (vertices)          |   275/440 |    70/161 |     17/36 |      7/10 |
+VBOs (vert and indices)  |           |           |           |           |
+	NVIDIA
+SIDES                    |      4096 |     16384 |     65536 |    262144 |
+Immediate mode           |       223 |        90 |        23 |         6 |
+VBOs (vertices)          |       240 |   130/121 |     37/55 |      9/14 |
+VBOs (vert and indices)  |           |           |           |           |
+
+*/
 
 float alfa = 0.0f, beta = 0.0f, radius = 5.0f;
 float camX, camY, camZ;
 
 GLuint buffers[1];
-int sides = 100;
-int qvertex = sides * 4*3;
+int sides = 4096;
+int qvertex = sides * 4 * 3;
 float *vertexB = (float*)malloc(sizeof(float) * qvertex * 3);
+int frame,fps;
+int currtime, timebase;
 
 
 void spherical2Cartesian() {
@@ -141,6 +160,10 @@ void cylinder(float radius, float height, int sides) {
 	glEnd();
 }
 
+/*
+	Draw a cylinder with VBO vertices
+*/
+
 void cylinder1(float radius, float height, int sides) {
 
 	int i;
@@ -158,7 +181,7 @@ void cylinder1(float radius, float height, int sides) {
 		vertexB[vbi++] = cos(i * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = height * 0.5;
 		vertexB[vbi++] = -sin(i * step * M_PI / 180.0) * radius;
-		
+
 		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = height * 0.5;
 		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0) * radius;
@@ -170,45 +193,76 @@ void cylinder1(float radius, float height, int sides) {
 		vertexB[vbi++] = 0;
 		vertexB[vbi++] = -height * 0.5;
 		vertexB[vbi++] = 0;
-		
-		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0)*radius;
-		vertexB[vbi++] = -height*0.5;
-		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0)*radius;
-		
-		vertexB[vbi++] = cos(i * step * M_PI / 180.0)*radius;
+
+		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = -height * 0.5;
-		vertexB[vbi++] = -sin(i * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0) * radius;
+
+		vertexB[vbi++] = cos(i * step * M_PI / 180.0) * radius;
+		vertexB[vbi++] = -height * 0.5;
+		vertexB[vbi++] = -sin(i * step * M_PI / 180.0) * radius;
 	}
 
 	// body
 	for (i = 0; i < sides; i++) {
-		vertexB[vbi++] = cos(i * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = cos(i * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = height * 0.5;
-		vertexB[vbi++] = -sin(i * step * M_PI / 180.0)*radius;
-		
-		vertexB[vbi++] = cos(i * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin(i * step * M_PI / 180.0) * radius;
+
+		vertexB[vbi++] = cos(i * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = -height * 0.5;
-		vertexB[vbi++] = -sin(i * step * M_PI / 180.0)*radius;
-		
-		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin(i * step * M_PI / 180.0) * radius;
+
+		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = height * 0.5;
-		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0) * radius;
 
 
-		vertexB[vbi++] = cos(i * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = cos(i * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = -height * 0.5;
-		vertexB[vbi++] = -sin(i * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin(i * step * M_PI / 180.0) * radius;
 
-		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = -height * 0.5;
-		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0) * radius;
 
-		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = cos((i + 1) * step * M_PI / 180.0) * radius;
 		vertexB[vbi++] = height * 0.5;
-		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0)*radius;
+		vertexB[vbi++] = -sin((i + 1) * step * M_PI / 180.0) * radius;
 	}
 }
 
+void menu() {
+
+    int q = 1;
+    string toPrint[q] = { "FPS:" + std::to_string(fps) };
+
+    int len[q];
+    for (int i = 0; i < q; i++) {
+        len[i] = toPrint[i].length();
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    gluOrtho2D(0, 1280, 0, 1024);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    for (int j = 0; j < q; j++) {
+        glRasterPos2i(20, 1000 - (j * 20));
+        for (int i = 0; i < len[j]; ++i) {
+            glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, toPrint[j][i]);
+        }
+    }
+    glPopMatrix();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+
+};
 
 void renderScene(void) {
 
@@ -221,13 +275,23 @@ void renderScene(void) {
 	          0.0, 0.0, 0.0,
 	          0.0f, 1.0f, 0.0f);
 
-	glBindBuffer(GL_ARRAY_BUFFER,buffers[0]);
-	glVertexPointer(3,GL_FLOAT,0,0);
+	glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	glVertexPointer(3, GL_FLOAT, 0, 0);
 
-	glDrawArrays(GL_TRIANGLES,0, qvertex);
+	glDrawArrays(GL_TRIANGLES, 0, qvertex);
 
+	cylinder(1, 2, sides); //this is for immediate mode
+
+	frame++;
+	currtime = glutGet(GLUT_ELAPSED_TIME);
+	if (currtime - timebase > 1000) {
+		fps = frame * 1000.0 / (currtime - timebase);
+		timebase = currtime;
+		frame = 0;
+	}
 
 	// End of frame
+	menu();
 	glutSwapBuffers();
 }
 
@@ -235,6 +299,18 @@ void renderScene(void) {
 void processKeys(unsigned char c, int xx, int yy) {
 
 // put code to process regular keys in here
+
+	switch (c){
+
+		case 'm':
+			sides *=4;
+			printf("%d\n", sides);
+			break;
+		case 'n':
+			sides /=4;
+			printf("%d\n", sides);
+			break;
+	}
 
 }
 
@@ -297,6 +373,7 @@ int main(int argc, char **argv) {
 // Required callback registry
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
+	glutIdleFunc(renderScene);
 
 // Callback registration for keyboard processing
 	glutKeyboardFunc(processKeys);
@@ -312,15 +389,16 @@ int main(int argc, char **argv) {
 	glPolygonMode(GL_FRONT, GL_LINE);
 
 	spherical2Cartesian();
-	cylinder1(1, 2, sides);
-
+	
+	//cylinder1(1,2,sides);
 
 	printInfo();
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glGenBuffers(1,buffers);
-	glBindBuffer(GL_ARRAY_BUFFER,buffers[0]);
-	glBufferData(GL_ARRAY_BUFFER,sizeof(float)*qvertex*3, vertexB,GL_STATIC_DRAW);
+	// This is for VBOs
+	// glEnableClientState(GL_VERTEX_ARRAY);
+	// glGenBuffers(1, buffers);
+	// glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+	// glBufferData(GL_ARRAY_BUFFER, sizeof(float)*qvertex * 3, vertexB, GL_STATIC_DRAW);
 
 // enter GLUT's main cycle
 	glutMainLoop();
@@ -342,9 +420,6 @@ glVertexPointer(3,float,0,0);
 glDrawArray(GL_TRIANGLES,0,count);
 
 
-
-
-
-
+vblank_mode=0 primusrun ./class4
 
 */
